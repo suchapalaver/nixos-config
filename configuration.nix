@@ -26,8 +26,6 @@
 
   # Set your time zone - adjust this to your actual timezone
   time.timeZone = "America/New_York";
-  services.timesyncd.enable = false;
-  services.chrony.enable = false;
 
   # Configure network proxy if necessary
   # networking.proxy.default = "http://user:password@proxy:port/";
@@ -176,7 +174,6 @@
     gnumake
     neofetch
     neovim
-    nodejs_latest
     trezor-suite
     unzip
     vim
