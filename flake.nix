@@ -5,9 +5,10 @@
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
     home-manager.url = "github:nix-community/home-manager";
     rust-overlay.url = "github:oxalica/rust-overlay";
+    sops-nix.url = "github:Mic92/sops-nix";
   };
 
-  outputs = { self, nixpkgs, home-manager, rust-overlay, ... }: {
+  outputs = { self, nixpkgs, home-manager, rust-overlay, sops-nix, ... }: {
     nixosConfigurations.nixos-dev = nixpkgs.lib.nixosSystem {
       system = "x86_64-linux";
       modules = [
@@ -17,6 +18,8 @@
 
         ./hardware-configuration.nix
         ./configuration.nix
+
+        sops-nix.nixosModules.sops
 
         home-manager.nixosModules.home-manager
         {

@@ -1,0 +1,8 @@
+keys:
+  - &joseph age1za0ke9qvy5p5yd5jvt35wvyu0zwjk0cwgy7zpaasgjhp6ge9a4tqyrtmgv
+
+creation_rules:
+  - path_regex: secrets/.*\.yaml$
+    key_groups:
+      - age:
+          - *joseph

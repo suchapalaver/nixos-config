@@ -26,6 +26,8 @@
 
   # Set your time zone - adjust this to your actual timezone
   time.timeZone = "America/New_York";
+  services.timesyncd.enable = false;
+  services.chrony.enable = false;
 
   # Configure network proxy if necessary
   # networking.proxy.default = "http://user:password@proxy:port/";
@@ -137,6 +139,18 @@
   # Personal
   boot.kernelPackages = pkgs.linuxPackages_latest;
   services.fprintd.enable = true;
+
+  # Sops secrets management
+  sops = {
+    defaultSopsFile = ./secrets/api-keys.yaml;
+    age.keyFile = "/home/joseph/.config/sops/age/keys.txt";
+
+    secrets.openai_api_key = {
+      owner = "joseph";
+      group = "users";
+      mode = "0400";
+    };
+  };
 
   users.users.joseph = {
     isNormalUser = true;

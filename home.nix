@@ -63,6 +63,9 @@
     # Python (for various tools)
     python3
     python311Packages.pip
+
+    # Node.js (for npm global packages like codex-cli)
+    nodejs
     
     # Blockchain development
     foundry  # Ethereum development toolkit (forge, cast, anvil, chisel)
@@ -70,6 +73,10 @@
     # GPG for commit signing
     gnupg
     pinentry-gnome3
+
+    # Secrets management
+    age
+    sops
   ];
 
   # Git configuration
@@ -201,6 +208,12 @@
     };
     
     initContent = ''
+      # Add npm global bin to PATH
+      export PATH="$HOME/.npm-global/bin:$PATH"
+
+      # Load secrets from sops-nix
+      [[ -r /run/secrets/openai_api_key ]] && export OPENAI_API_KEY="$(cat /run/secrets/openai_api_key)"
+
       # Set up zoxide
       eval "$(zoxide init zsh)"
       
@@ -440,6 +453,11 @@
         AddKeysToAgent yes
     '';
   };
+
+  # npm configuration for global packages
+  home.file.".npmrc".text = ''
+    prefix=~/.npm-global
+  '';
 
   # Environment variables
   home.sessionVariables = {
