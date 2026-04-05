@@ -62,7 +62,7 @@
 
     # Python (for various tools)
     python3
-    python311Packages.pip
+    python3Packages.pip
 
     # Node.js (for npm global packages like codex-cli)
     nodejs
@@ -79,38 +79,40 @@
     sops
   ];
 
+  home.file = {
+    ".local/bin/obsidian".source = "${pkgs.obsidian}/bin/obsidian-cli";
+    ".local/bin/obsidian-app".source = "${pkgs.obsidian}/bin/obsidian";
+  };
+
   # Git configuration
+  programs.delta = {
+    enable = true;
+    enableGitIntegration = true;
+    options = {
+      navigate = true;
+      side-by-side = true;
+      line-numbers = true;
+      syntax-theme = "Dracula";
+    };
+  };
+
   programs.git = {
     enable = true;
-    userName = "Joseph Livesey";
-    userEmail = "jlivesey@gmail.com";
-    
-    # Enable delta for better diffs
-    delta = {
-      enable = true;
-      options = {
-        navigate = true;
-        side-by-side = true;
-        line-numbers = true;
-        syntax-theme = "Dracula";
+    settings = {
+      user.name = "Joseph Livesey";
+      user.email = "jlivesey@gmail.com";
+      alias = {
+        co = "checkout";
+        ci = "commit";
+        st = "status";
+        br = "branch";
+        hist = "log --pretty=format:'%h %ad | %s%d [%an]' --graph --date=short";
+        type = "cat-file -t";
+        dump = "cat-file -p";
+        lg = "log --graph --pretty=format:'%Cred%h%Creset -%C(yellow)%d%Creset %s %Cgreen(%cr) %C(bold blue)<%an>%Creset' --abbrev-commit";
+        # Custom GitHub clone alias - preserves org/user structure
+        gh = "!f() { org=$(echo $1 | cut -d'/' -f1); repo=$(echo $1 | cut -d'/' -f2); mkdir -p $HOME/git/$org && cd $HOME/git/$org && git clone git@github.com:$1.git --recursive; }; f";
       };
-    };
-    
-    # Git aliases
-    aliases = {
-      co = "checkout";
-      ci = "commit";
-      st = "status";
-      br = "branch";
-      hist = "log --pretty=format:'%h %ad | %s%d [%an]' --graph --date=short";
-      type = "cat-file -t";
-      dump = "cat-file -p";
-      lg = "log --graph --pretty=format:'%Cred%h%Creset -%C(yellow)%d%Creset %s %Cgreen(%cr) %C(bold blue)<%an>%Creset' --abbrev-commit";
-      # Custom GitHub clone alias - preserves org/user structure
-      gh = "!f() { org=$(echo $1 | cut -d'/' -f1); repo=$(echo $1 | cut -d'/' -f2); mkdir -p $HOME/git/$org && cd $HOME/git/$org && git clone git@github.com:$1.git --recursive; }; f";
-    };
-    
-    extraConfig = {
       init.defaultBranch = "main";
       pull.rebase = true;
       push.autoSetupRemote = true;
@@ -205,6 +207,15 @@
       cw = "cargo watch";
       cf = "cargo fmt";
       clippy = "cargo clippy -- -W clippy::pedantic";
+
+      # Obsidian aliases
+      obs = "obsidian";
+      obsapp = "obsidian-app";
+      obsd = "obsidian daily";
+      obsa = "obsidian daily:append";
+      obsr = "obsidian search";
+      obsu = "obsidian unresolved";
+      obso = "obsidian orphans";
     };
     
     initContent = ''
@@ -318,6 +329,25 @@
         echo "To enable commit signing, add this to your git config:"
         echo "  git config --global user.signingkey YOUR_KEY_ID"
         echo "  git config --global commit.gpgsign true"
+      }
+
+      # Obsidian helpers
+      obsn() {
+        obsidian create "$@"
+      }
+
+      obsdump() {
+        local out_file="$1"
+        shift
+        "$@" > "$out_file"
+      }
+
+      obscap() {
+        local note_path="$1"
+        shift
+        local output
+        output="$("$@")" || return $?
+        obsidian append path="$note_path" content="$output"
       }
     '';
   };
@@ -440,18 +470,19 @@
   # SSH configuration
   programs.ssh = {
     enable = true;
-    addKeysToAgent = "yes";
-    extraConfig = ''
-      Host *
-        ServerAliveInterval 60
-        ServerAliveCountMax 3
-      
-      Host github.com
-        HostName github.com
-        User git
-        IdentityFile ~/.ssh/id_ed25519
-        AddKeysToAgent yes
-    '';
+    enableDefaultConfig = false;
+    matchBlocks."*" = {
+      addKeysToAgent = "yes";
+      serverAliveInterval = 60;
+      serverAliveCountMax = 3;
+      hashKnownHosts = true;
+    };
+    matchBlocks."github.com" = {
+      hostname = "github.com";
+      user = "git";
+      identityFile = "~/.ssh/id_ed25519";
+      addKeysToAgent = "yes";
+    };
   };
 
   # npm configuration for global packages
