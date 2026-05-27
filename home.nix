@@ -11,6 +11,7 @@
   home.packages = with pkgs; [
     # Applications
     obsidian
+    whatsapp-electron
 
     # Rust toolchain via rust-overlay
     (rust-bin.stable.latest.default.override {
@@ -324,7 +325,8 @@
       fbuild = "forge build";
       fscript = "forge script";
 
-      # Obsidian aliases
+      # Application aliases
+      whatsapp = "whatsapp-electron";
       obs = "obsidian";
       obsapp = "obsidian-app";
       obsd = "obsidian daily";
