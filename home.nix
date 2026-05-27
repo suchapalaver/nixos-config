@@ -11,7 +11,7 @@
   home.packages = with pkgs; [
     # Applications
     obsidian
-    
+
     # Rust toolchain via rust-overlay
     (rust-bin.stable.latest.default.override {
       extensions = [ "rust-src" "rust-analyzer" ];
@@ -22,54 +22,79 @@
     cargo-outdated
     cargo-audit
     cargo-generate
-    bacon  # Background rust code checker
-    sccache  # Shared compilation cache
+    cargo-nextest      # Better test runner (from macOS Brewfile)
+    cargo-deny         # Dependency linting (from macOS Brewfile)
+    cargo-machete      # Find unused dependencies (from macOS Brewfile)
+    cargo-release      # Release automation (from macOS Brewfile)
+    cargo-semver-checks # API compatibility (from macOS Brewfile)
+    cargo-insta        # Snapshot testing (from macOS Brewfile)
+    bacon              # Background rust code checker
+    sccache            # Shared compilation cache
 
     # Editors (Cursor will be installed separately as it's not in nixpkgs yet)
 
     # Terminal tools
     starship
-    zoxide  # Better cd
-    eza  # Better ls
-    bat  # Better cat
-    ripgrep  # Better grep
-    fd  # Better find
-    fzf  # Fuzzy finder
-    jq  # JSON processor
-    yq  # YAML processor
-    httpie  # Better curl
-    gh  # GitHub CLI
-    lazygit  # Git TUI
-    delta  # Better git diff
+    zoxide             # Better cd
+    eza                # Better ls
+    bat                # Better cat
+    ripgrep            # Better grep
+    fd                 # Better find
+    fzf                # Fuzzy finder
+    jq                 # JSON processor
+    yq                 # YAML processor
+    httpie             # Better curl
+    gh                 # GitHub CLI
+    lazygit            # Git TUI
+    delta              # Better git diff
+    just               # Task runner (from macOS Brewfile)
+    watchexec          # File watcher (from macOS Brewfile)
+    mdbook             # Documentation builder (from macOS Brewfile)
+    taplo              # TOML toolkit (from macOS Brewfile)
 
     # System monitoring
     htop
     btop
     ncdu
-    duf  # Better df
-    procs  # Better ps
+    duf                # Better df
+    procs              # Better ps
 
     # Development tools
     direnv
     tmux
     tree
-    tldr  # Better man pages
-    tokei  # Code statistics
+    tldr               # Better man pages
+    tokei              # Code statistics
+    shellcheck         # Shell script linter (from macOS Brewfile)
+    git-filter-repo    # Git history rewriting (from macOS Brewfile)
+    graphviz           # Graph visualization (from macOS Brewfile)
+    plantuml           # UML diagrams (from macOS Brewfile)
+    grpcurl            # gRPC CLI (from macOS Brewfile)
+    cmake              # Build system
+    gnumake            # Make
 
-    # Container tools
+    # Container & Kubernetes tools
     podman
     podman-compose
+    k3d                # k3s in Docker (from macOS Brewfile)
+    kind               # Kubernetes in Docker (from macOS Brewfile)
+    kubernetes-helm    # Kubernetes package manager (from macOS Brewfile)
+    kubectl            # Kubernetes CLI
 
     # Python (for various tools)
     python3
     python3Packages.pip
+    pipx               # Run Python apps in isolation (from macOS Brewfile)
 
-    # Node.js (for npm global packages like codex-cli)
+    # Node.js & JavaScript
     nodejs
-    
+    pnpm               # Fast package manager (from macOS Brewfile)
+    yarn               # Package manager (from macOS Brewfile)
+    bun                # Fast JS runtime (from macOS Brewfile)
+
     # Blockchain development
-    foundry  # Ethereum development toolkit (forge, cast, anvil, chisel)
-    
+    foundry            # Ethereum development toolkit (forge, cast, anvil, chisel)
+
     # GPG for commit signing
     gnupg
     pinentry-gnome3
@@ -77,12 +102,37 @@
     # Secrets management
     age
     sops
+
+    # Infrastructure
+    terraform          # Infrastructure as Code (from macOS Brewfile)
+    tailscale          # VPN (from macOS Brewfile)
+
+    # Database tools
+    postgresql         # PostgreSQL client (from macOS Brewfile)
+    redis              # Redis CLI (from macOS Brewfile)
   ];
 
   home.file = {
     ".local/bin/obsidian".source = "${pkgs.obsidian}/bin/obsidian-cli";
     ".local/bin/obsidian-app".source = "${pkgs.obsidian}/bin/obsidian";
   };
+
+  # Global git ignore (aligned with macOS config)
+  xdg.configFile."git/ignore".text = ''
+    # Claude Code local settings
+    **/.claude/settings.local.json
+
+    # Common ignores
+    .DS_Store
+    *.swp
+    *.swo
+    *~
+    .idea/
+    .vscode/
+    *.log
+    .env.local
+    .env.*.local
+  '';
 
   # Git configuration
   programs.delta = {
@@ -98,9 +148,12 @@
 
   programs.git = {
     enable = true;
+    lfs.enable = true;  # Git LFS support
     settings = {
       user.name = "Joseph Livesey";
       user.email = "jlivesey@gmail.com";
+      user.signingkey = "68CE9DFE49F46456";
+
       alias = {
         co = "checkout";
         ci = "commit";
@@ -109,36 +162,88 @@
         hist = "log --pretty=format:'%h %ad | %s%d [%an]' --graph --date=short";
         type = "cat-file -t";
         dump = "cat-file -p";
-        lg = "log --graph --pretty=format:'%Cred%h%Creset -%C(yellow)%d%Creset %s %Cgreen(%cr) %C(bold blue)<%an>%Creset' --abbrev-commit";
+        # Tree-like log with relative dates (aligned with macOS)
+        lg = "log --graph --date=relative --pretty=tformat:'%Cred%h%Creset -%C(auto)%d%Creset %s %Cgreen(%an %ad)%Creset'";
+        # List local commits not yet pushed (from macOS config)
+        review-local = "!git lg @{push}..";
+        # Quick append to .gitignore (from macOS config)
+        ignore = "!f() { echo $1 >> .gitignore; }; f";
         # Custom GitHub clone alias - preserves org/user structure
         gh = "!f() { org=$(echo $1 | cut -d'/' -f1); repo=$(echo $1 | cut -d'/' -f2); mkdir -p $HOME/git/$org && cd $HOME/git/$org && git clone git@github.com:$1.git --recursive; }; f";
       };
+
       init.defaultBranch = "main";
-      pull.rebase = true;
-      push.autoSetupRemote = true;
-      color.ui = "auto";
-      
+
+      # Commit settings
+      commit.gpgsign = true;
+
+      # Push settings (aligned with macOS)
+      push = {
+        default = "current";
+        autoSetupRemote = true;
+      };
+
+      # Pull settings (aligned with macOS)
+      pull = {
+        ff = "only";
+        default = "current";
+      };
+
+      # Rebase settings (aligned with macOS)
+      rebase = {
+        autoSquash = true;
+        gpgsign = true;
+      };
+
+      # Tag settings
+      tag = {
+        sort = "version:refname";
+        gpgsign = true;
+      };
+
+      # Core settings
       core = {
         editor = "nvim";
+        pager = "less -R";
         sshCommand = "ssh -i ~/.ssh/id_ed25519";
+        excludesfile = "~/.config/git/ignore";
       };
-      
-      credential = {
-        helper = "cache";
+
+      # Log settings (cleaner output)
+      log = {
+        abbrevCommit = true;
+        follow = true;
+        decorate = false;
       };
-      
-      merge.conflictstyle = "diff3";
-      diff.colorMoved = "default";
-      
+
+      # Diff settings
+      diff = {
+        colorMoved = "default";
+        mnemonicPrefix = true;
+        tool = "vimdiff";
+      };
+
+      # Merge settings
+      merge = {
+        conflictstyle = "diff3";
+        ff = false;
+        tool = "vimdiff";
+      };
+
+      # Format settings (aligned with macOS)
+      format.signoff = true;
+
+      color.ui = "auto";
+
+      credential.helper = "cache --timeout=3600";
+
       # Use SSH for GitHub
       url."ssh://git@github.com/" = {
         insteadOf = "https://github.com/";
       };
-      
-      # GPG signing configuration (commented out until GPG key is set up)
-      # commit.gpgsign = true;
-      # user.signingkey = "YOUR_GPG_KEY_ID";
-      # gpg.program = "${pkgs.gnupg}/bin/gpg";
+
+      # GPG program path (for when signing is enabled)
+      gpg.program = "${pkgs.gnupg}/bin/gpg";
     };
   };
 
@@ -182,7 +287,10 @@
       grep = "rg";
       find = "fd";
       cd = "z";
-      
+
+      # Docker -> Podman (aligned with macOS)
+      docker = "podman";
+
       # Git aliases
       g = "git";
       gs = "git status";
@@ -193,12 +301,14 @@
       gd = "git diff";
       gco = "git checkout";
       gcb = "git checkout -b";
-      
+      glg = "git lg";  # Tree-like log
+      grl = "git review-local";  # Review unpushed commits
+
       # Nix aliases
       rebuild = "sudo nixos-rebuild switch --flake /etc/nixos#nixos-dev";
       update = "\\cd /etc/nixos && sudo nix flake update && \\cd -";
       garbage = "sudo nix-collect-garbage -d";
-      
+
       # Rust aliases
       cb = "cargo build";
       cr = "cargo run";
@@ -207,6 +317,12 @@
       cw = "cargo watch";
       cf = "cargo fmt";
       clippy = "cargo clippy -- -W clippy::pedantic";
+      ctn = "cargo nextest run";  # Better test runner
+
+      # Foundry/EVM aliases
+      ftest = "forge test";
+      fbuild = "forge build";
+      fscript = "forge script";
 
       # Obsidian aliases
       obs = "obsidian";
@@ -219,18 +335,23 @@
     };
     
     initContent = ''
-      # Add npm global bin to PATH
+      # Add paths
       export PATH="$HOME/.npm-global/bin:$PATH"
+      export PATH="$HOME/.local/bin:$PATH"
+      export PATH="$HOME/.foundry/bin:$PATH"  # Foundry (forge, cast, anvil, chisel)
+
+      # GPG TTY for commit signing (aligned with macOS)
+      export GPG_TTY=$(tty)
 
       # Load secrets from sops-nix
       [[ -r /run/secrets/openai_api_key ]] && export OPENAI_API_KEY="$(cat /run/secrets/openai_api_key)"
 
       # Set up zoxide
       eval "$(zoxide init zsh)"
-      
+
       # Set up starship
       eval "$(starship init zsh)"
-      
+
       # Set up direnv
       eval "$(direnv hook zsh)"
       
@@ -405,18 +526,32 @@
     nix-direnv.enable = true;
   };
 
-  # Tmux configuration
+  # Tmux configuration (aligned with macOS config)
   programs.tmux = {
     enable = true;
     clock24 = true;
-    escapeTime = 0;
+    escapeTime = 10;  # Remove delay for ESC in Neovim
     baseIndex = 1;
     keyMode = "vi";
-    customPaneNavigationAndResize = true;
-    
+    prefix = "C-a";  # Use C-a instead of C-b (aligned with macOS)
+    terminal = "tmux-256color";
+
     plugins = with pkgs.tmuxPlugins; [
       sensible
       yank
+      vim-tmux-navigator  # Seamless vim/tmux navigation (from macOS)
+      {
+        plugin = resurrect;  # Persist sessions after restart (from macOS)
+        extraConfig = ''
+          set -g @resurrect-capture-pane-contents 'on'
+        '';
+      }
+      {
+        plugin = continuum;  # Auto-save sessions every 15 min (from macOS)
+        extraConfig = ''
+          set -g @continuum-restore 'on'
+        '';
+      }
       {
         plugin = dracula;
         extraConfig = ''
@@ -426,19 +561,40 @@
         '';
       }
     ];
-    
+
     extraConfig = ''
+      # True color support
+      set -ag terminal-overrides ",xterm-256color:RGB"
+
       # Mouse support
       set -g mouse on
-      
-      # Better split keys
+
+      # Better split keys (aligned with macOS)
+      unbind %
       bind | split-window -h
+      unbind '"'
       bind - split-window -v
-      
+
       # Reload config
       bind r source-file ~/.config/tmux/tmux.conf \; display "Config reloaded!"
-      
-      # Status bar
+
+      # Vim-style pane resizing (from macOS)
+      bind j resize-pane -D 5
+      bind k resize-pane -U 5
+      bind l resize-pane -R 5
+      bind h resize-pane -L 5
+
+      # Maximize pane toggle
+      bind -r m resize-pane -Z
+
+      # Vi copy mode bindings (from macOS)
+      bind-key -T copy-mode-vi 'v' send -X begin-selection
+      bind-key -T copy-mode-vi 'y' send -X copy-selection
+
+      # Don't exit copy mode when dragging with mouse
+      unbind -T copy-mode-vi MouseDragEnd1Pane
+
+      # Status bar position
       set -g status-position top
     '';
   };
@@ -467,21 +623,23 @@
 
   # Neovim is configured via init.lua file below
 
-  # SSH configuration
+  # SSH configuration (using new settings API)
   programs.ssh = {
     enable = true;
     enableDefaultConfig = false;
-    matchBlocks."*" = {
-      addKeysToAgent = "yes";
-      serverAliveInterval = 60;
-      serverAliveCountMax = 3;
-      hashKnownHosts = true;
-    };
-    matchBlocks."github.com" = {
-      hostname = "github.com";
-      user = "git";
-      identityFile = "~/.ssh/id_ed25519";
-      addKeysToAgent = "yes";
+    settings = {
+      "*" = {
+        AddKeysToAgent = "yes";
+        ServerAliveInterval = 60;
+        ServerAliveCountMax = 3;
+        HashKnownHosts = true;
+      };
+      "github.com" = {
+        Hostname = "github.com";
+        User = "git";
+        IdentityFile = "~/.ssh/id_ed25519";
+        AddKeysToAgent = "yes";
+      };
     };
   };
 

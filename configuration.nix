@@ -158,12 +158,13 @@
   };
   
   nixpkgs.config.allowUnfreePredicate = pkg:
-    builtins.elem (lib.getName pkg) [ 
+    builtins.elem (lib.getName pkg) [
       "trezor-suite"
       "brave"
       "claude-code"
       "cursor"
       "obsidian"
+      "terraform"
    ];
 
   environment.systemPackages = with pkgs; [
