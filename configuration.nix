@@ -79,6 +79,7 @@
   
   # Enable zsh system-wide
   programs.zsh.enable = true;
+  programs.ssh.systemd-ssh-proxy.enable = false;
 
   # List packages installed in system profile. To search, run:
   # $ nix search wget
@@ -163,11 +164,13 @@
       "brave"
       "claude-code"
       "cursor"
+      "discord"
       "obsidian"
       "terraform"
    ];
 
   environment.systemPackages = with pkgs; [
+    bubblewrap
     brave
     claude-code
     curl

@@ -3,7 +3,8 @@
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
-    home-manager.url = "github:nix-community/home-manager";
+    home-manager.url = "github:nix-community/home-manager/release-26.05";
+    home-manager.inputs.nixpkgs.follows = "nixpkgs";
     rust-overlay.url = "github:oxalica/rust-overlay";
     sops-nix.url = "github:Mic92/sops-nix";
     claude-code-nixpkgs.url = "github:NixOS/nixpkgs/45a1530683263666f42d1de4cdda328109d5a676";
@@ -21,6 +22,9 @@
                 system = prev.stdenv.hostPlatform.system;
                 config.allowUnfree = true;
               }).claude-code;
+              pipx = prev.pipx.overridePythonAttrs (_old: {
+                doCheck = false;
+              });
             })
           ];
         })

@@ -12,6 +12,7 @@
     # Applications
     obsidian
     whatsapp-electron
+    discord
 
     # Rust toolchain via rust-overlay
     (rust-bin.stable.latest.default.override {
@@ -206,7 +207,7 @@
       core = {
         editor = "nvim";
         pager = "less -R";
-        sshCommand = "ssh -i ~/.ssh/id_ed25519";
+        sshCommand = "ssh -F none -i ~/.ssh/id_ed25519 -o IdentitiesOnly=yes -o AddKeysToAgent=yes -o ServerAliveInterval=60 -o ServerAliveCountMax=3 -o HashKnownHosts=yes";
         excludesfile = "~/.config/git/ignore";
       };
 
@@ -336,7 +337,8 @@
       obso = "obsidian orphans";
     };
     
-    initContent = ''
+    initContent = lib.mkMerge [
+      (lib.mkOrder 1000 ''
       # Add paths
       export PATH="$HOME/.npm-global/bin:$PATH"
       export PATH="$HOME/.local/bin:$PATH"
@@ -348,15 +350,10 @@
       # Load secrets from sops-nix
       [[ -r /run/secrets/openai_api_key ]] && export OPENAI_API_KEY="$(cat /run/secrets/openai_api_key)"
 
-      # Set up zoxide
-      eval "$(zoxide init zsh)"
+      # Note: starship and direnv zsh integration are handled automatically by
+      # programs.starship.enable / programs.direnv.enable (enableZshIntegration
+      # defaults to true), so no manual `eval` is needed here.
 
-      # Set up starship
-      eval "$(starship init zsh)"
-
-      # Set up direnv
-      eval "$(direnv hook zsh)"
-      
       # Enhanced history settings
       setopt HIST_IGNORE_ALL_DUPS  # Delete old recorded entry if new entry is a duplicate
       setopt HIST_SAVE_NO_DUPS     # Don't write duplicate entries in the history file
@@ -472,7 +469,15 @@
         output="$("$@")" || return $?
         obsidian append path="$note_path" content="$output"
       }
-    '';
+      '')
+
+      # Initialize zoxide dead last — home-manager sources zsh-syntax-highlighting
+      # (order 1200) and zsh-history-substring-search (1250) after the default
+      # initContent (1000). mkAfter (1500) ensures zoxide's hooks aren't clobbered.
+      (lib.mkAfter ''
+        eval "$(zoxide init zsh)"
+      '')
+    ];
   };
 
   # Starship prompt configuration
