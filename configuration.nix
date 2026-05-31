@@ -63,6 +63,18 @@
     alsa.support32Bit = true;
   };
 
+  # Give the system a memory-pressure safety valve without a disk swap partition.
+  zramSwap.enable = true;
+
+  # Intel 11th-gen graphics: provide VAAPI support for Chromium/Brave video paths.
+  hardware.graphics = {
+    enable = true;
+    extraPackages = with pkgs; [
+      intel-media-driver
+    ];
+  };
+  environment.sessionVariables.LIBVA_DRIVER_NAME = "iHD";
+
   # Enable touchpad support (enabled default in most desktopManager).
   # services.libinput.enable = true;
 
@@ -136,7 +148,7 @@
   boot.kernelParams = [ "nvme_core.default_ps_max_latency_us=5500" ];
 
   # Personal
-  boot.kernelPackages = pkgs.linuxPackages_latest;
+  # Use the default NixOS kernel for laptop graphics/suspend stability.
   services.fprintd.enable = true;
 
   # Sops secrets management
