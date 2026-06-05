@@ -19,6 +19,9 @@
 
   # Use the systemd-boot EFI boot loader.
   boot.loader.systemd-boot.enable = true;
+  # Cap retained generations so the 511M ESP can't fill up with old
+  # kernels/initrds (each generation keeps a boot entry on /boot).
+  boot.loader.systemd-boot.configurationLimit = 10;
   boot.loader.efi.canTouchEfiVariables = true;
 
   networking.hostName = "nixos-dev"; # Define your hostname.
