@@ -78,6 +78,12 @@
   };
   environment.sessionVariables.LIBVA_DRIVER_NAME = "iHD";
 
+  # Flipper Zero USB permissions and qFlipper.
+  hardware.flipperzero.enable = true;
+
+  # ZSA Voyager USB permissions for flashing and live training.
+  hardware.keyboard.zsa.enable = true;
+
   # Enable touchpad support (enabled default in most desktopManager).
   # services.libinput.enable = true;
 
@@ -180,6 +186,7 @@
       "claude-code"
       "cursor"
       "discord"
+      "keymapp"
       "obsidian"
       "terraform"
    ];
@@ -192,6 +199,7 @@
     git
     gnumake
     fastfetch
+    keymapp
     neovim
     trezor-suite
     unzip

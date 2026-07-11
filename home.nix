@@ -13,6 +13,7 @@
     obsidian
     whatsapp-electron
     discord
+    (callPackage ./packages/claude-code-update.nix { })
 
     # Rust toolchain via rust-overlay
     (rust-bin.stable.latest.default.override {
@@ -309,6 +310,7 @@
       # Nix aliases
       rebuild = "sudo nixos-rebuild switch --flake /etc/nixos#nixos-dev";
       update = "\\cd /etc/nixos && sudo nix flake update && \\cd -";
+      claude-update = "claude-code-update";
       garbage = "sudo nix-collect-garbage -d";
 
       # Rust aliases

@@ -7,7 +7,7 @@
     home-manager.inputs.nixpkgs.follows = "nixpkgs";
     rust-overlay.url = "github:oxalica/rust-overlay";
     sops-nix.url = "github:Mic92/sops-nix";
-    claude-code-nixpkgs.url = "github:NixOS/nixpkgs/45a1530683263666f42d1de4cdda328109d5a676";
+    claude-code-nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
   };
 
   outputs = { self, nixpkgs, home-manager, rust-overlay, sops-nix, claude-code-nixpkgs, ... }: {
@@ -17,11 +17,8 @@
         ({ pkgs, ... }: {
           nixpkgs.overlays = [
             rust-overlay.overlays.default
+            (import ./overlays/claude-code.nix { inherit claude-code-nixpkgs; })
             (final: prev: {
-              claude-code = (import claude-code-nixpkgs {
-                system = prev.stdenv.hostPlatform.system;
-                config.allowUnfree = true;
-              }).claude-code;
               pipx = prev.pipx.overridePythonAttrs (_old: {
                 doCheck = false;
               });
