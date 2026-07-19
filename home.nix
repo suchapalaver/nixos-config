@@ -48,6 +48,7 @@
     yq                 # YAML processor
     httpie             # Better curl
     gh                 # GitHub CLI
+    chezmoi            # Dotfile manager
     lazygit            # Git TUI
     delta              # Better git diff
     just               # Task runner (from macOS Brewfile)
