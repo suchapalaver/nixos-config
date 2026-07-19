@@ -138,6 +138,18 @@
     .env.*.local
   '';
 
+  # Chezmoi is installed for inspecting/applying dotfiles, but Home Manager
+  # owns the NixOS shell, Git, and tmux targets skipped in .chezmoiignore.
+  xdg.configFile."chezmoi/chezmoi.toml".text = ''
+    sourceDir = "${config.home.homeDirectory}/git/suchapalaver/dotfiles"
+
+    [data]
+    gpg_signing_key = "68CE9DFE49F46456"
+
+    [warnings]
+    configFileTemplateHasChanged = false
+  '';
+
   # Git configuration
   programs.delta = {
     enable = true;
