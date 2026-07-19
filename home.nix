@@ -311,6 +311,8 @@
       rebuild = "sudo nixos-rebuild switch --flake /etc/nixos#nixos-dev";
       update = "\\cd /etc/nixos && sudo nix flake update && \\cd -";
       claude-update = "claude-code-update";
+      codex-update = "npm install --global @openai/codex@latest && codex --version";
+      update-ai = "claude-code-update && npm install --global @openai/codex@latest && claude --version && codex --version";
       garbage = "sudo nix-collect-garbage -d";
 
       # Rust aliases
