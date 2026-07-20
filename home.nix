@@ -357,6 +357,7 @@
       rebuild = "sudo nixos-rebuild switch --flake /etc/nixos#nixos-dev";
       update = "\\cd /etc/nixos && sudo nix flake update && \\cd -";
       claude-update = "claude-code-update";
+      # Codex is intentionally updated from the user npm prefix; see README.md.
       codex-update = "npm install --global @openai/codex@latest && codex --version";
       update-ai = "claude-code-update && npm install --global @openai/codex@latest && claude --version && codex --version";
       garbage = "sudo nix-collect-garbage -d";
@@ -700,7 +701,8 @@
     };
   };
 
-  # npm configuration for global packages
+  # npm configuration for global packages. Codex CLI currently uses this prefix
+  # so it can track npm stable without also installing pkgs.codex on PATH.
   home.file.".npmrc".text = ''
     prefix=~/.npm-global
   '';

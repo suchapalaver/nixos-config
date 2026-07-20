@@ -63,6 +63,26 @@ grep '^Exec=' ~/.local/share/applications/trezor-suite.desktop
 nix eval --raw /etc/nixos#nixosConfigurations.nixos-dev.pkgs.trezor-suite.version
 ```
 
+## Codex CLI
+
+Codex CLI is intentionally managed through the user npm prefix, not through
+`pkgs.codex` in Home Manager. Home Manager owns `~/.npmrc`, puts
+`~/.npm-global/bin` on `PATH`, and defines `codex-update`. This keeps Codex on npm
+stable while the locked Nixpkgs package can lag, and avoids two `codex` binaries
+competing on `PATH`.
+
+Verify the ownership model:
+
+```bash
+which -a codex
+npm list --global --depth=0 @openai/codex
+nix eval --raw /etc/nixos#nixosConfigurations.nixos-dev.pkgs.codex.version
+zsh -ic 'alias codex-update'
+```
+
+Switch to Nix only if `pkgs.codex` is current enough, and remove the npm-managed
+binary before adding a Nix-managed Codex package.
+
 ## Secrets
 
 Password hash stored in `/etc/nixos-secrets/joseph-password-hash` (not in repo).
