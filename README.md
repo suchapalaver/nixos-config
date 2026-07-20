@@ -46,6 +46,21 @@ nix flake update /etc/nixos
 nix-collect-garbage -d
 ```
 
+## Contribution Workflow
+
+Use Conventional Commits for commit subjects and PR titles:
+
+```text
+chore(nixos): update pinned packages
+fix(trezor): manage launcher paths declaratively
+docs(codex): document cli ownership
+```
+
+Normal changes should go through a pull request against `master`. The repository
+uses squash merges and the squash commit title comes from the PR title, so keep
+the PR title as the final commit subject you want in history. Direct pushes to
+`master` are reserved for emergency recovery.
+
 ## Trezor Suite
 
 Trezor Suite is managed by NixOS, not by AppImages in `~/Downloads`.

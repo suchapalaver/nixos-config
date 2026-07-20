@@ -1,0 +1,33 @@
+name: PR title
+
+on:
+  pull_request:
+    types:
+      - opened
+      - edited
+      - reopened
+      - synchronize
+      - ready_for_review
+
+permissions:
+  contents: read
+
+jobs:
+  conventional-title:
+    name: PR title
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check Conventional Commit title
+        env:
+          TITLE: ${{ github.event.pull_request.title }}
+        run: |
+          set -euo pipefail
+
+          pattern='^(build|chore|ci|docs|feat|fix|perf|refactor|revert|style|test)(\([a-z0-9._-]+\))?!?: .+'
+
+          if [[ ! "$TITLE" =~ $pattern ]]; then
+            echo "PR title must follow Conventional Commits."
+            echo "Example: chore(nixos): update pinned packages"
+            echo "Actual: $TITLE"
+            exit 1
+          fi
