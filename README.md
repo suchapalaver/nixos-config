@@ -46,6 +46,38 @@ nix flake update /etc/nixos
 nix-collect-garbage -d
 ```
 
+## Update Strategy
+
+Treat `nix flake update /etc/nixos` as a broad system input update. It can move
+the whole package set and make `nixos-rebuild switch` fetch or build a large
+closure. Use it when the goal is a general system refresh.
+
+For a single Nixpkgs-owned package, first check the current locked version:
+
+```bash
+nix eval --raw /etc/nixos#nixosConfigurations.nixos-dev.pkgs.trezor-suite.version
+```
+
+If the package must move and this repo does not have a dedicated pin for it, use
+an input-specific update and expect system-level rebuild impact:
+
+```bash
+nix flake update nixpkgs --flake /etc/nixos
+sudo nixos-rebuild switch --flake /etc/nixos#nixos-dev
+```
+
+Current policy by tool:
+
+| Tool | Owner | Update path |
+|------|-------|-------------|
+| Trezor Suite | Nixpkgs `trezor-suite` | Update `nixpkgs`; do not use AppImages or mutable launchers |
+| Claude Code | `pins/claude-code.nix` plus `claude-code-nixpkgs` | Run `claude-update` |
+| Codex CLI | User npm prefix | Run `codex-update` |
+
+Only add a dedicated pin or overlay for another volatile app when broad Nixpkgs
+updates become operationally painful often enough to justify maintaining source
+URLs, hashes, and compatibility checks in this repo.
+
 ## Contribution Workflow
 
 Use Conventional Commits for commit subjects and PR titles:
