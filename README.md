@@ -46,6 +46,23 @@ nix flake update /etc/nixos
 nix-collect-garbage -d
 ```
 
+## Trezor Suite
+
+Trezor Suite is managed by NixOS, not by AppImages in `~/Downloads`.
+`configuration.nix` installs `trezor-suite`, adds `trezor-udev-rules`, and enables
+`services.trezord`. Home Manager owns compatibility wrappers at
+`~/.local/bin/trezor-suite` and `~/bin/trezor`; both delegate to the active system
+package at `/run/current-system/sw/bin/trezor-suite`.
+
+Verify the launch path after rebuilding:
+
+```bash
+which -a trezor-suite
+sed -n '1,3p' "$(which trezor-suite)"
+grep '^Exec=' ~/.local/share/applications/trezor-suite.desktop
+nix eval --raw /etc/nixos#nixosConfigurations.nixos-dev.pkgs.trezor-suite.version
+```
+
 ## Secrets
 
 Password hash stored in `/etc/nixos-secrets/joseph-password-hash` (not in repo).

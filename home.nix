@@ -119,6 +119,39 @@
   home.file = {
     ".local/bin/obsidian".source = "${pkgs.obsidian}/bin/obsidian-cli";
     ".local/bin/obsidian-app".source = "${pkgs.obsidian}/bin/obsidian";
+
+    ".local/bin/trezor-suite" = {
+      executable = true;
+      force = true;
+      text = ''
+        #!/usr/bin/env bash
+        exec /run/current-system/sw/bin/trezor-suite "$@"
+      '';
+    };
+
+    "bin/trezor" = {
+      executable = true;
+      force = true;
+      text = ''
+        #!/usr/bin/env bash
+        exec /run/current-system/sw/bin/trezor-suite "$@"
+      '';
+    };
+
+    ".local/share/applications/trezor-suite.desktop" = {
+      force = true;
+      text = ''
+        [Desktop Entry]
+        Name=Trezor Suite
+        Comment=Trezor Suite - Desktop crypto wallet
+        Exec=/run/current-system/sw/bin/trezor-suite %U
+        Icon=trezor-suite
+        Terminal=false
+        Type=Application
+        Categories=Finance;Security;
+        StartupWMClass=Trezor Suite
+      '';
+    };
   };
 
   # Global git ignore (aligned with macOS config)
