@@ -186,6 +186,7 @@
       "claude-code"
       "cursor"
       "discord"
+      "discord-unwrapped"
       "keymapp"
       "obsidian"
       "terraform"
