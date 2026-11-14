@@ -10,10 +10,9 @@
     home-manager.inputs.nixpkgs.follows = "nixpkgs";
     rust-overlay.url = "github:oxalica/rust-overlay";
     sops-nix.url = "github:Mic92/sops-nix";
-    claude-code-nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
   };
 
-  outputs = { self, brave-nixpkgs, nixpkgs, home-manager, rust-overlay, sops-nix, claude-code-nixpkgs, ... }: {
+  outputs = { self, brave-nixpkgs, nixpkgs, home-manager, rust-overlay, sops-nix, ... }: {
     nixosConfigurations.nixos-dev = nixpkgs.lib.nixosSystem {
       system = "x86_64-linux";
       modules = [
@@ -26,8 +25,17 @@
                 config.allowUnfree = true;
               }).brave;
             })
-            (import ./overlays/claude-code.nix { inherit claude-code-nixpkgs; })
             (final: prev: {
+              # nixpkgs' Rust hook forces system libraries, but foundry's
+              # recipe currently omits the ones used by its Rust dependencies.
+              foundry = prev.foundry.overrideAttrs (old: {
+                buildInputs = (old.buildInputs or [ ]) ++ [
+                  final.aws-lc
+                  final.rust-jemalloc-sys
+                  final.sqlite
+                  final.zstd
+                ];
+              });
               pipx = prev.pipx.overridePythonAttrs (_old: {
                 doCheck = false;
               });
