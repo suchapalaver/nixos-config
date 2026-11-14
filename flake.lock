@@ -2,11 +2,11 @@
   "nodes": {
     "brave-nixpkgs": {
       "locked": {
-        "lastModified": 1794671417,
-        "narHash": "sha256-R9hpluHVUJ4fnraH97h/CkWPAxzNaKqTrGS7OMWgyGI=",
+        "lastModified": 1794671650,
+        "narHash": "sha256-UErsxjA4+HieJGlKftNqX591Iw7k9bJ40F9EC7hS2Zw=",
         "owner": "NixOS",
         "repo": "nixpkgs",
-        "rev": "883ffcccb10902fd720a976d2ec355f40883d161",
+        "rev": "2b46b51b691128ea2b1f65fd8a56619982101bcb",
         "type": "github"
       },
       "original": {
