@@ -183,9 +183,9 @@
     builtins.elem (lib.getName pkg) [
       "trezor-suite"
       "brave"
-      "claude-code"
       "cursor"
       "discord"
+      "discord-unwrapped"
       "keymapp"
       "obsidian"
       "terraform"
@@ -194,7 +194,6 @@
   environment.systemPackages = with pkgs; [
     bubblewrap
     brave
-    claude-code
     curl
     git
     gnumake

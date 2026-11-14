@@ -13,7 +13,6 @@
     obsidian
     whatsapp-electron
     discord
-    (callPackage ./packages/claude-code-update.nix { })
 
     # Rust toolchain via rust-overlay
     (rust-bin.stable.latest.default.override {
@@ -355,11 +354,10 @@
 
       # Nix aliases
       rebuild = "sudo nixos-rebuild switch --flake /etc/nixos#nixos-dev";
-      update = "\\cd /etc/nixos && sudo nix flake update && \\cd -";
-      claude-update = "claude-code-update";
+      update = "(\\cd /etc/nixos && nix flake update brave-nixpkgs home-manager nixpkgs rust-overlay sops-nix --flake . && sudo nixos-rebuild switch --flake .#nixos-dev)";
       # Codex is intentionally updated from the user npm prefix; see README.md.
       codex-update = "npm install --global @openai/codex@latest && codex --version";
-      update-ai = "claude-code-update && npm install --global @openai/codex@latest && claude --version && codex --version";
+      update-ai = "npm install --global @openai/codex@latest && codex --version";
       garbage = "sudo nix-collect-garbage -d";
 
       # Rust aliases

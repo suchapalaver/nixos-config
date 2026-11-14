@@ -39,8 +39,8 @@ sudo nixos-rebuild switch --flake /etc/nixos#nixos-dev
 # Rebuild system
 sudo nixos-rebuild switch --flake /etc/nixos#nixos-dev
 
-# Update inputs
-nix flake update /etc/nixos
+# Update coordinated system and application inputs, then rebuild
+update
 
 # Garbage collect
 nix-collect-garbage -d
@@ -48,9 +48,11 @@ nix-collect-garbage -d
 
 ## Update Strategy
 
-Treat `nix flake update /etc/nixos` as a broad system input update. It can move
-the whole package set and make `nixos-rebuild switch` fetch or build a large
-closure. Use it when the goal is a general system refresh.
+The `update` alias refreshes the coordinated system and application inputs and
+then rebuilds `nixos-dev`. It can move the whole package set and make the rebuild
+fetch or build a large closure. The explicit input list intentionally excludes
+`claude-code-nixpkgs`, whose package format must move together with the version
+pin managed by `claude-update`, and Codex, which is managed by `codex-update`.
 
 For a single Nixpkgs-owned package, first check the current locked version:
 
@@ -71,6 +73,7 @@ Current policy by tool:
 | Tool | Owner | Update path |
 |------|-------|-------------|
 | Trezor Suite | Nixpkgs `trezor-suite` | Update `nixpkgs`; do not use AppImages or mutable launchers |
+| Brave | `brave-nixpkgs` input | Run `nix flake update brave-nixpkgs --flake /etc/nixos`; the dedicated input follows Nixpkgs `master` so browser security releases do not wait for `nixos-unstable` |
 | Claude Code | `pins/claude-code.nix` plus `claude-code-nixpkgs` | Run `claude-update` |
 | Codex CLI | User npm prefix | Run `codex-update` |
 
