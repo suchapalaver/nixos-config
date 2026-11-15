@@ -19,8 +19,9 @@ chmod 700 /etc/nixos-secrets
 mkpasswd -m sha-512 | sudo tee /etc/nixos-secrets/joseph-password-hash > /dev/null
 chmod 600 /etc/nixos-secrets/joseph-password-hash
 
-# Rebuild
-sudo nixos-rebuild switch --flake /etc/nixos#nixos-dev
+# Install the configuration for the next boot, then reboot
+sudo nixos-rebuild boot --flake /etc/nixos#nixos-dev
+sudo reboot
 ```
 
 ## Structure
@@ -32,27 +33,79 @@ sudo nixos-rebuild switch --flake /etc/nixos#nixos-dev
 | `home.nix` | User packages, shell, dotfiles |
 | `hardware-configuration.nix` | Machine-specific hardware (generated) |
 | `nvim-config.lua` | Neovim configuration |
+| `nixos-update.sh` | Guarded update, publication, and activation workflow |
 
 ## Commands
 
 ```bash
-# Rebuild system
-sudo nixos-rebuild switch --flake /etc/nixos#nixos-dev
-
-# Update coordinated system and application inputs, then rebuild
+# Prepare and validate a coordinated system update
 update
 
-# Garbage collect
-nix-collect-garbage -d
+# Commit, push, and open the validated update PR
+update-publish
+
+# After reviewing and merging the PR, install clean master for the next boot
+rebuild
+sudo reboot
+
+# Inspect Git, generation, firmware, and service state
+nixos-status
 ```
 
 ## Update Strategy
 
-The `update` alias refreshes the coordinated system and application inputs and
-then rebuilds `nixos-dev`. It can move the whole package set and make the rebuild
-fetch or build a large closure. The explicit input list intentionally excludes
-`claude-code-nixpkgs`, whose package format must move together with the version
-pin managed by `claude-update`, and Codex, which is managed by `codex-update`.
+Updates are staged through `nixos-update`; they are never activated from a dirty
+tree and broad updates never use live `switch`. Run a coordinated system update
+every 2-4 weeks:
+
+```bash
+update                  # prepare system: branch, update, check, and build
+update-publish          # commit flake.lock, push, and open a PR
+# Review and squash-merge the PR.
+rebuild                 # fast-forward clean master and run nixos-rebuild boot
+sudo reboot
+```
+
+`update` refreshes `nixpkgs`, Home Manager, `rust-overlay`, and `sops-nix`.
+The expected dirty state exists only on the temporary update branch between
+`update` and `update-publish`. Use `update-cancel` to abandon that lockfile-only
+update safely. `rebuild` refuses to run unless `master` is clean and matches the
+remote after a fast-forward.
+
+Brave follows the fast-moving Nixpkgs `master` branch so browser security fixes
+can arrive before `nixos-unstable`. Update it separately, at most weekly or when
+a relevant Brave security release is available:
+
+```bash
+update-brave
+update-publish
+# Review and merge the PR, then run `rebuild` and reboot.
+```
+
+The validation build intentionally happens before the lockfile is committed.
+The helper suppresses the otherwise expected dirty-tree warning only for those
+validation commands. Activation always happens from committed, clean `master`.
+
+### What each stage means in NixOS
+
+1. **Update inputs:** `nix flake update` changes `flake.lock`, the exact graph of
+   upstream revisions and hashes. It does not update the running machine.
+2. **Evaluate and build:** `nix flake check` evaluates declared checks, and
+   `nix build` realises the complete system closure in `/nix/store`. Neither
+   command activates it.
+3. **Record the declaration:** committing the lockfile makes the tested closure
+   reproducible and reviewable. The PR is the boundary between a candidate and
+   the configuration trusted for activation.
+4. **Create a generation:** `nixos-rebuild boot` builds from clean `master`,
+   advances the system profile, and installs a boot entry. It deliberately does
+   not replace services or libraries in the running desktop.
+5. **Reboot and verify:** rebooting starts the new immutable generation. Until
+   then, `/run/current-system` identifies the old running generation while
+   `/nix/var/nix/profiles/system` identifies the next boot default.
+
+Previous generations remain selectable in the systemd-boot menu, which is the
+normal rollback path if a new generation fails. This is why garbage collection
+is kept separate from updating.
 
 For a single Nixpkgs-owned package, first check the current locked version:
 
@@ -60,12 +113,15 @@ For a single Nixpkgs-owned package, first check the current locked version:
 nix eval --raw /etc/nixos#nixosConfigurations.nixos-dev.pkgs.trezor-suite.version
 ```
 
-If the package must move and this repo does not have a dedicated pin for it, use
-an input-specific update and expect system-level rebuild impact:
+If a Nixpkgs-owned package must move, use the normal `update` flow because moving
+`nixpkgs` can affect the entire system closure, even when only one package
+motivated the update. The underlying manual operations performed by the helper
+are:
 
 ```bash
 nix flake update nixpkgs --flake /etc/nixos
-sudo nixos-rebuild switch --flake /etc/nixos#nixos-dev
+nix flake check /etc/nixos
+nix build --no-link /etc/nixos#nixosConfigurations.nixos-dev.config.system.build.toplevel
 ```
 
 Current policy by tool:
@@ -73,13 +129,20 @@ Current policy by tool:
 | Tool | Owner | Update path |
 |------|-------|-------------|
 | Trezor Suite | Nixpkgs `trezor-suite` | Update `nixpkgs`; do not use AppImages or mutable launchers |
-| Brave | `brave-nixpkgs` input | Run `nix flake update brave-nixpkgs --flake /etc/nixos`; the dedicated input follows Nixpkgs `master` so browser security releases do not wait for `nixos-unstable` |
-| Claude Code | `pins/claude-code.nix` plus `claude-code-nixpkgs` | Run `claude-update` |
+| Brave | `brave-nixpkgs` input | Run `update-brave`, then `update-publish`; merge and activate with `rebuild` |
 | Codex CLI | User npm prefix | Run `codex-update` |
 
 Only add a dedicated pin or overlay for another volatile app when broad Nixpkgs
 updates become operationally painful often enough to justify maintaining source
 URLs, hashes, and compatibility checks in this repo.
+
+Do not run automatic garbage collection as part of an update. First confirm the
+new generation is stable and retain recent rollback generations. Review them
+manually with:
+
+```bash
+sudo nix-env --list-generations --profile /nix/var/nix/profiles/system
+```
 
 ## Contribution Workflow
 
