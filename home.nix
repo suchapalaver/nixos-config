@@ -119,6 +119,12 @@
     ".local/bin/obsidian".source = "${pkgs.obsidian}/bin/obsidian-cli";
     ".local/bin/obsidian-app".source = "${pkgs.obsidian}/bin/obsidian";
 
+    ".local/bin/nixos-update" = {
+      executable = true;
+      force = true;
+      source = ./nixos-update.sh;
+    };
+
     ".local/bin/trezor-suite" = {
       executable = true;
       force = true;
@@ -353,12 +359,15 @@
       grl = "git review-local";  # Review unpushed commits
 
       # Nix aliases
-      rebuild = "sudo nixos-rebuild switch --flake /etc/nixos#nixos-dev";
-      update = "(\\cd /etc/nixos && nix flake update brave-nixpkgs home-manager nixpkgs rust-overlay sops-nix --flake . && sudo nixos-rebuild switch --flake .#nixos-dev)";
+      rebuild = "nixos-update activate";
+      update = "nixos-update prepare system";
+      update-brave = "nixos-update prepare brave";
+      update-publish = "nixos-update publish";
+      update-cancel = "nixos-update cancel";
+      nixos-status = "nixos-update status";
       # Codex is intentionally updated from the user npm prefix; see README.md.
       codex-update = "npm install --global @openai/codex@latest && codex --version";
       update-ai = "npm install --global @openai/codex@latest && codex --version";
-      garbage = "sudo nix-collect-garbage -d";
 
       # Rust aliases
       cb = "cargo build";
