@@ -23,7 +23,12 @@
               brave = (import brave-nixpkgs {
                 inherit (final.stdenv.hostPlatform) system;
                 config.allowUnfree = true;
-              }).brave;
+              }).brave.override {
+                # Chromium honors the final --disable-features occurrence, so
+                # retain the package defaults while disabling Vulkan on Wayland.
+                commandLineArgs =
+                  "--disable-features=Vulkan,OutdatedBuildDetector,UseChromeOSDirectVideoDecoder --use-webgpu-adapter=opengles";
+              };
             })
             (final: prev: {
               # nixpkgs' Rust hook forces system libraries, but foundry's
