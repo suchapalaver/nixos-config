@@ -24,9 +24,8 @@
                 inherit (final.stdenv.hostPlatform) system;
                 config.allowUnfree = true;
               }).brave.override {
-                # Chromium still probes native Vulkan on Wayland when the
-                # feature is disabled. Keep WebGPU on GLES and preserve the
-                # package's existing disables in the final switch occurrence.
+                # Chromium honors the final --disable-features occurrence, so
+                # retain the package defaults while disabling Vulkan on Wayland.
                 commandLineArgs =
                   "--disable-features=Vulkan,OutdatedBuildDetector,UseChromeOSDirectVideoDecoder --use-webgpu-adapter=opengles";
               };
