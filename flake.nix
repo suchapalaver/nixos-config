@@ -23,7 +23,13 @@
               brave = (import brave-nixpkgs {
                 inherit (final.stdenv.hostPlatform) system;
                 config.allowUnfree = true;
-              }).brave;
+              }).brave.override {
+                # Chromium still probes native Vulkan on Wayland when the
+                # feature is disabled. Keep WebGPU on GLES and preserve the
+                # package's existing disables in the final switch occurrence.
+                commandLineArgs =
+                  "--disable-features=Vulkan,OutdatedBuildDetector,UseChromeOSDirectVideoDecoder --use-webgpu-adapter=opengles";
+              };
             })
             (final: prev: {
               # nixpkgs' Rust hook forces system libraries, but foundry's
